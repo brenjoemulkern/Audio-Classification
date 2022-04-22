@@ -1,5 +1,14 @@
+# ignore mp3 files
 *.mp3
+
+# ignore png files
 *.png
+
+# ignore csv files
 *.csv
+
+# ignore DS_Store
 .DS_Store
+
+# ignore pycache
 *.pyc

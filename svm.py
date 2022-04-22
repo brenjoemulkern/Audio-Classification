@@ -1,12 +1,12 @@
-import pandas as pd
 import librosa
 import numpy as np
 import os
-import warnings
+import pandas as pd
 from sklearn import svm
 import sklearn.model_selection as model_selection
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import f1_score
+import warnings
 
 def build_dataframe(csv_file):
     # make dataframe from csv
@@ -35,15 +35,6 @@ def build_mfcc_dataframe():
     return mfcc_df
 
 def main():
-    
-    # train_df = build_dataframe('data/train.csv')
-    # train_df = train_df.sort_values(by=[0])
-    # train_df = train_df.reset_index(drop=True)
-
-    # mfcc_df = build_mfcc_dataframe()
-    # mfcc_df.to_csv('data/mfcc.csv', index=False)
-    # mfcc_train_df = pd.concat([train_df, mfcc_df], axis=1)
-    # mfcc_train_df.to_csv('data/mfcc_train.csv', index=False)
 
     mfcc_train_df = build_dataframe('data/trunc_mfcc_train.csv')
     X = mfcc_train_df.iloc[:, 2:]
