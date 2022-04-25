@@ -1,13 +1,13 @@
-import librosa
+import matplotlib.pyplot as plt
 import numpy as np
-import os
 import pandas as pd
+import seaborn as sns
 from sklearn import svm
 import sklearn.model_selection as model_selection
 from sklearn.metrics import accuracy_score
+from sklearn.metrics import confusion_matrix
 from sklearn.metrics import f1_score
 from sklearn.model_selection import cross_val_score
-import warnings
 
 def build_dataframe(csv_file):
     # make dataframe from csv
@@ -18,52 +18,63 @@ def build_dataframe(csv_file):
     print('Number of columns: ', d_frame.shape[1])
     return d_frame
 
-def build_mfcc_dataframe():
-    warnings.simplefilter("ignore", UserWarning)
-    warnings.simplefilter("ignore", FutureWarning)
+def write_csv(id_list, class_list, filename):
+    print('Writing csv')
+    filename = filename + '.csv'
+    indices = np.asarray(id_list[0])
 
-    mfcc_list = []
-    for file in sorted(os.listdir('./data/train/')):
-        x, sr = librosa.load(('data/train/' + file), sr=None, mono=True)
-        #print('Duration: {:.2f}s, {} samples'.format(x.shape[-1] / sr, x.size))
-
-        mfcc = librosa.feature.mfcc(x, sr=sr)
-        mean_mfcc = mfcc.mean(axis=1)
-        mfcc_list.append(mean_mfcc)
-        print('Processing file', file)
-
-    mfcc_df = pd.DataFrame(np.vstack(mfcc_list))
-    return mfcc_df
+    # concatenate arrays, transpose, and save as csv
+    full_array = np.concatenate(([indices], [class_list]), axis=0)
+    full_array_transpose = np.transpose(full_array)
+    full_dataframe = pd.DataFrame(full_array_transpose, columns = ['id','genre'])
+    full_dataframe.to_csv(filename, index=False)
 
 def main():
 
-    mfcc_train_df = build_dataframe('data/trunc_mfcc_train.csv')
+    # make dataframes of training and testing data
+    mfcc_train_df = build_dataframe('data/mean_mfcc_train.csv')
+    mfcc_test_df = build_dataframe('data/mean_mfcc_test.csv')
+
+    # define X and y as features and classes of all training data
     X = mfcc_train_df.iloc[:, 2:]
-    print(X.shape)
     y = mfcc_train_df.iloc[:, 1]
-    print(y.shape)
+
+    # validation split for confusion matrix validation
     X_train, X_test, y_train, y_test = model_selection.train_test_split(X, y, train_size=0.80, test_size=0.20, random_state=101)
 
-    rbf = svm.SVC(kernel='rbf', gamma=0.5, C=0.1).fit(X_train, y_train)
-    rbf_cv = svm.SVC(kernel='rbf', gamma=0.5, C=0.1)
-    scores = cross_val_score(rbf_cv, X, y, cv=5)
+    # train and test with 80/20 split, make confusion matrix
+    poly_model = svm.SVC(kernel='poly', degree=2, C=1)
+    poly_model.fit(X_train, y_train)
+    poly_pred = poly_model.predict(X_test)
+    poly_accuracy = accuracy_score(y_test, poly_pred)
+    poly_cf = confusion_matrix(y_test, poly_pred)
 
-    rbf_pred = rbf.predict(X_test)
+    # train and test with 5-fold cross validation
+    poly_cv_scores = cross_val_score(poly_model, X, y, cv=5)
 
-    rbf_accuracy = accuracy_score(y_test, rbf_pred)
-    rbf_f1 = f1_score(y_test, rbf_pred, average='weighted')
-    print('Accuracy (RBF Kernel): ', "%.2f" % (rbf_accuracy*100))
-    print('F1 (RBF Kernel): ', "%.2f" % (rbf_f1*100))
-    print('CV Scores: ', scores)
+    # plot confusion matrix
+    plt.figure(figsize=(10, 8))
+    sns.heatmap(poly_cf,
+                xticklabels=[0,1,2,3,4,5],
+                yticklabels=[0,1,2,3,4,5],
+                annot=True, fmt='g')
+    plt.xlabel('Prediction')
+    plt.ylabel('Label')
+    plt.show()
 
-    # poly = svm.SVC(kernel='poly', degree=3, C=1).fit(X_train, y_train)
+    # display results
+    print('SVM Polynomial Accuracy: ', poly_accuracy)
+    print('SVM Polynomial Cross-Validation Scores:', poly_cv_scores)
 
-    # poly_pred = poly.predict(X_test)
+    # use model to predict test data classes
+    poly_model.fit(X, y)
+    X_new = mfcc_test_df.iloc[:, 1:]
+    y_new = poly_model.predict(X_new)
 
-    # poly_accuracy = accuracy_score(y_test, poly_pred)
-    # poly_f1 = f1_score(y_test, poly_pred, average='weighted')
-    # print('Accuracy (Polynomial Kernel): ', "%.2f" % (poly_accuracy*100))
-    # print('F1 (Polynomial Kernel): ', "%.2f" % (poly_f1*100))
+    # write results to csv
+    write_csv(mfcc_test_df.iloc[:, :1], y_new, 'svm_submission')
+
+
 
 if __name__ == "__main__":
     main()
