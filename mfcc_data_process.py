@@ -106,22 +106,25 @@ def main():
     # make dataframe of testing ids
     test_df = build_dataframe('data/test_idx.csv')
 
+    # the following blocks are for processing the mfccs as truncated dataframes,
+    # but are commented out as the truncated versions are not used in the final classification.
+
     # build truncated flattened dataframe, combine with training labels, save as csv
-    mfcc_trunc_df = build_trunc_mfcc_dataframe()
-    mfcc_trunc_df.to_csv('data/trunc_mfcc.csv', index=False)
-    mfcc_trunc_train_df = pd.concat([train_df, mfcc_trunc_df], axis=1)
-    mfcc_trunc_train_df.to_csv('data/trunc_mfcc_train.csv', index=False)
+    # mfcc_trunc_df = build_trunc_mfcc_dataframe()
+    # mfcc_trunc_df.to_csv('data/trunc_mfcc.csv', index=False)
+    # mfcc_trunc_train_df = pd.concat([train_df, mfcc_trunc_df], axis=1)
+    # mfcc_trunc_train_df.to_csv('data/trunc_mfcc_train.csv', index=False)
+
+    # build mfcc truncated csv
+    # mfcc_trunc_test = build_trunc_mfcc_test_dataframe()
+    # mfcc_trunc_test_full = pd.concat([test_df, mfcc_trunc_test], axis=1)
+    # mfcc_trunc_test_full.to_csv('data/trunc_mfcc_test.csv', index=False)
 
     # build mean mfcc dataframe, combine with training labels, save as csv
     mfcc_mean_df = build_mean_mfcc_dataframe()
     mfcc_mean_df.to_csv('data/mean_mfcc.csv', index=False)
     mfcc_mean_train_df = pd.concat([train_df, mfcc_mean_df], axis=1)
     mfcc_mean_train_df.to_csv('data/mean_mfcc_train.csv', index=False)
-
-    # build mfcc truncated csv
-    mfcc_trunc_test = build_trunc_mfcc_test_dataframe()
-    mfcc_trunc_test_full = pd.concat([test_df, mfcc_trunc_test], axis=1)
-    mfcc_trunc_test_full.to_csv('data/trunc_mfcc_test.csv', index=False)
 
     # build mfcc mean csv
     mfcc_mean_test = build_mean_mfcc_test_dataframe()

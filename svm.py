@@ -6,7 +6,6 @@ from sklearn import svm
 import sklearn.model_selection as model_selection
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import confusion_matrix
-from sklearn.metrics import f1_score
 from sklearn.model_selection import cross_val_score
 
 def build_dataframe(csv_file):
