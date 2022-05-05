@@ -9,33 +9,7 @@ To run the bash script, run the following:
 
 <code>./setup.bash<code>
 
-This will create the following directories:
-
-.
-|--data
-    |--test
-    |--train
-|--plots
-|--spectrograms
-    |--test
-    |--train
-        |--0
-        |--1
-        |--2
-        |--3
-        |--4
-        |--5
-|--submissions
-|--waves
-    |--test
-    |--train
-        |--0
-        |--1
-        |--2
-        |--3
-        |--4
-        |--5
-
+This will create the necessary directories.
 After these directories are created, place the training and testing mp3 files in the "train" and "test" folders respectively.
 
 ### Data Representation
