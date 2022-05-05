@@ -33,6 +33,8 @@ This will save the training files into subdirectories based on their classes and
 
 There are four classification files: <code>svm.py</code>, <code>log_regression.py</code>, <code>wave_neural_net.py</code>, and <code>spectrogram_neural_net.py</code>.
 
+#### SVM
+
 To run the SVM classifier, run:
 
 <code>svm.py</code>
@@ -41,6 +43,8 @@ which requires the MFCC data to have been processed (there should be <code>mean_
 
 This will make dataframes from the csv files, perform 5-fold cross validation on the training data, and classify the test data. The results of the validation will be printed, a plot of the confusion matrix will be saved to the "plots" directory, and a csv of the classified test data will be saved to the "submissions" directory.
 
+#### Logistic Regression
+
 To run the Logistic Regression classifier, run:
 
 <code>log_regression.py</code>
@@ -48,3 +52,7 @@ To run the Logistic Regression classifier, run:
 which requires the MFCC data to have been processed (there should be <code>mean_mfcc_train.csv</code> and <code>mean_mfcc_test.csv</code> in the data directory).
 
 As with the SVM classifier, this will make dataframes from the csv files, perform 5-fold cross validation on the training data, and classify the test data. The results of the validation will be printed, a plot of the confusion matrix will be saved to the "plots" directory, and a csv of the classified test data will be saved to the "submissions" directory.
+
+#### CNN: Waveforms
+
+#### CNN: Spectrograms
