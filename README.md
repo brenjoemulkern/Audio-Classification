@@ -11,6 +11,7 @@ To run the bash script, run the following:
 
 This will create the necessary directories.
 After these directories are created, place the training and testing mp3 files in the "train" and "test" folders respectively.
+Place the <code>train.csv</code> and <code>test_idx.csv</code> files in the data directory.
 
 ### Data Representation
 
