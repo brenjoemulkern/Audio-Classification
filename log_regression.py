@@ -4,7 +4,7 @@ import pandas as pd
 import seaborn as sns
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import cross_val_score, train_test_split
-from sklearn.metrics import accuracy_score, confusion_matrix, plot_confusion_matrix
+from sklearn.metrics import accuracy_score, confusion_matrix
 
 def build_dataframe(csv_file):
     # make dataframe from csv
@@ -53,13 +53,10 @@ def main():
 
     # plot confusion matrix
     plt.figure(figsize=(10, 8))
-    sns.heatmap(log_cf,
-                xticklabels=[0,1,2,3,4,5],
-                yticklabels=[0,1,2,3,4,5],
-                annot=True, fmt='g')
+    sns.heatmap(log_cf, xticklabels=[0,1,2,3,4,5], yticklabels=[0,1,2,3,4,5], annot=True, fmt='g')
     plt.xlabel('Prediction')
     plt.ylabel('Label')
-    plt.show()
+    plt.savefig('./plots/log_reg_confusion_matrix.png')
 
     # display results
     print('Logistic Regression Accuracy:', log_accuracy)

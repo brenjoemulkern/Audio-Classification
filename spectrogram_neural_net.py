@@ -4,7 +4,11 @@ import os
 import pandas as pd
 import sys
 
+from sklearn.utils import shuffle
+import seaborn as sns
 import tensorflow as tf
+
+from sklearn.metrics import confusion_matrix
 from tensorflow import keras
 from keras.preprocessing import image
 
@@ -32,6 +36,9 @@ def write_csv(id_list, class_list, filename):
     full_array_transpose = np.transpose(full_array)
     full_dataframe = pd.DataFrame(full_array_transpose, columns = ['id','genre'])
     full_dataframe.to_csv(filename, index=False)
+
+# build df of test data filenames
+test_df = build_dataframe('data/test_idx.csv')
 
 # define directories for spectrograms
 data_dir = pathlib.Path('./spectrograms/train/')
@@ -62,7 +69,7 @@ val_ds = tf.keras.preprocessing.image_dataset_from_directory(
     subset="validation",
     seed=8,
     image_size=(img_height, img_width),
-    batch_size=batch_size
+    batch_size=batch_size,
     )
 
 # define training dataset as all training images
@@ -122,11 +129,12 @@ model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.00005), loss=tf
 # show model summary
 model.summary()
 
+EPOCHS = 30
+# training with validation; this block is skipped with -p flag
 if len(sys.argv) == 1:
     # train model with 80/20 split for validation purposes
-    epochs=60
+    epochs=EPOCHS
     history = model.fit(train_ds, validation_data=val_ds, epochs=epochs)
-
 
     # plot accuracy and loss
     accuracy = history.history['accuracy']
@@ -148,23 +156,45 @@ if len(sys.argv) == 1:
     plt.plot(epochs_range, val_loss, label='Validation Loss')
     plt.legend(loc='upper right')
     plt.title('Training and Validation Loss')
-    plt.show()
+    plt.savefig('./plots/spectrogram_val_acc_loss.png')
+    plt.close('all')
+
+    val_predictions = []  # store predicted labels
+    val_class_labels = []  # store true labels
+
+
+    for img, label in val_ds:  
+        val_class_labels.append(label)
+        single_pred = model.predict(img)
+        val_predictions.append(np.argmax(single_pred, axis=1))
+
+    val_predictions = np.asarray(val_predictions)
+    val_class_labels = np.asarray(val_class_labels)
+    
+    val_cf = confusion_matrix(val_predictions.flatten(), val_class_labels.flatten())
+
+    # plot confusion matrix
+    plt.figure(figsize=(10, 8))
+    sns.heatmap(val_cf, xticklabels=[0,1,2,3,4,5], yticklabels=[0,1,2,3,4,5], annot=True)
+    plt.xlabel('Prediction')
+    plt.ylabel('Label')
+    plt.savefig('./plots/spect_confusion_matrix.png')
 
     print('Making predictions on test data...')
     result_array = model.predict(test_ds)
 
-if len(sys.argv) == 1 or (len(sys.argv) == 2 and sys.argv[1] == '-p'):
-    # executes with -p to indicate prediction only
+    # use filenames and results to make csv of predictions
+    write_csv(test_df.iloc[:, 0:], np.argmax(result_array, axis=1), './submissions/spect_nn_val_submission')
 
-    # build df of test data filenames
-    test_df = build_dataframe('data/test_idx.csv')
+if len(sys.argv) == 1 or (len(sys.argv) == 2 and sys.argv[1] == '-p'):
+    # executes with no args or with -p flag to indicate training and prediciton only
 
     # fit all training data
-    model.fit(all_train_ds, epochs=60)
+    model.fit(all_train_ds, epochs=EPOCHS)
 
     # predict on test data
     print('Making predictions on test data...')
     result_array = model.predict(test_ds)
 
     # use filenames and results to make csv of predictions
-    write_csv(test_df.iloc[:, 0:], np.argmax(result_array, axis=1), 'spect_nn_submission')
+    write_csv(test_df.iloc[:, 0:], np.argmax(result_array, axis=1), './submissions/spect_nn_submission')

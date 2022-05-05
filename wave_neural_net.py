@@ -2,8 +2,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os
 import pandas as pd
+import seaborn as sns
 import sys
 
+from sklearn.metrics import confusion_matrix
 import tensorflow as tf
 from tensorflow import keras
 from keras.preprocessing import image
@@ -32,6 +34,9 @@ def write_csv(id_list, class_list, filename):
     full_dataframe = pd.DataFrame(full_array_transpose, columns = ['id','genre'])
     full_dataframe.to_csv(filename, index=False)
 
+# build df of test data filenames
+test_df = build_dataframe('data/test_idx.csv')
+
 # define directories for waveforms
 data_dir = pathlib.Path('./waves/train/')
 test_data_dir = pathlib.Path('./waves/test/')
@@ -49,7 +54,7 @@ train_ds = tf.keras.preprocessing.image_dataset_from_directory(
     data_dir,
     validation_split=0.2,
     subset="training",
-    seed=8,
+    seed=22,
     image_size=(img_height, img_width),
     batch_size=batch_size
     )
@@ -59,7 +64,7 @@ val_ds = tf.keras.preprocessing.image_dataset_from_directory(
     data_dir,
     validation_split=0.2,
     subset="validation",
-    seed=8,
+    seed=22,
     image_size=(img_height, img_width),
     batch_size=batch_size
     )
@@ -117,28 +122,11 @@ model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.0005), loss=tf.
 # show model summary
 model.summary()
 
-def build_dataframe(csv_file):
-    # make dataframe from csv
-    print('Making dataframe from file:', csv_file)
-    d_frame = pd.read_csv(csv_file, skiprows=1, header=None)
-    print('Dataframe complete.')
-    print('Number of rows: ', d_frame.shape[0])
-    print('Number of columns: ', d_frame.shape[1])
-    return d_frame
-
-def write_csv(id_list, class_list, filename):
-    print('Writing csv')
-    filename = filename + '.csv'
-    indices = np.asarray(id_list[0])
-
-    # concatenate arrays, transpose, and save as csv
-    full_array = np.concatenate(([indices], [class_list]), axis=0)
-    full_array_transpose = np.transpose(full_array)
-    full_dataframe = pd.DataFrame(full_array_transpose, columns = ['id','genre'])
-    full_dataframe.to_csv(filename, index=False)
-
+EPOCHS = 25
+# training with validation; this block is skipped with -p flag
 if len(sys.argv) == 1:
-    epochs=1
+
+    epochs=EPOCHS
     history = model.fit(train_ds, validation_data=val_ds, epochs=epochs)
 
     # plot accuracy and loss
@@ -161,27 +149,44 @@ if len(sys.argv) == 1:
     plt.plot(epochs_range, val_loss, label='Validation Loss')
     plt.legend(loc='upper right')
     plt.title('Training and Validation Loss')
-    plt.show()
+    plt.savefig('./plots/waveform_val_acc_loss.png')
+
+    val_predictions = []  # store predicted labels
+    val_class_labels = []  # store true labels
+
+
+    for img, label in val_ds:  
+        val_class_labels.append(label)
+        single_pred = model.predict(img)
+        val_predictions.append(np.argmax(single_pred, axis=1))
+
+    val_predictions = np.asarray(val_predictions)
+    val_class_labels = np.asarray(val_class_labels)
+    
+    val_cf = confusion_matrix(val_predictions.flatten(), val_class_labels.flatten())
+
+    # plot confusion matrix
+    plt.figure(figsize=(10, 8))
+    sns.heatmap(val_cf, xticklabels=[0,1,2,3,4,5], yticklabels=[0,1,2,3,4,5], annot=True)
+    plt.xlabel('Prediction')
+    plt.ylabel('Label')
+    plt.savefig('./plots/wave_confusion_matrix.png')
 
     print('Making predictions on test data...')
     result_array = model.predict(test_ds)
 
-    # build df of test data filenames
-    test_df = build_dataframe('data/test_idx.csv')
-
     # write csv
-    write_csv(test_df.iloc[:, 0:], np.argmax(result_array, axis=1), 'wave_nn_val_submission')
+    write_csv(test_df.iloc[:, 0:], np.argmax(result_array, axis=1), './submissions/wave_nn_val_submission')
 
 if len(sys.argv) == 1 or (len(sys.argv) == 2 and sys.argv[1] == '-p'):
-    # build df of test data filenames
-    test_df = build_dataframe('data/test_idx.csv')
+    # executes with no args or with -p flag to indicate training and prediciton only
 
     # fit all training data
-    model.fit(all_train_ds, epochs=1)
+    model.fit(all_train_ds, epochs=EPOCHS)
 
     # predict using test data
     print('Making predictions on test data...')
     result_array = model.predict(test_ds)
 
     # write csv using filenames from test df
-    write_csv(test_df.iloc[:, 0:], np.argmax(result_array, axis=1), 'wave_nn_submission')
+    write_csv(test_df.iloc[:, 0:], np.argmax(result_array, axis=1), './submissions/wave_nn_submission')

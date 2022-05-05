@@ -1,3 +1,4 @@
+from pyexpat import model
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -34,9 +35,14 @@ def main():
     mfcc_train_df = build_dataframe('data/mean_mfcc_train.csv')
     mfcc_test_df = build_dataframe('data/mean_mfcc_test.csv')
 
+    mfcc_shuffle_df = mfcc_train_df.sample(frac=1)
+
     # define X and y as features and classes of all training data
     X = mfcc_train_df.iloc[:, 2:]
     y = mfcc_train_df.iloc[:, 1]
+
+    X_shuf = mfcc_shuffle_df.iloc[:, 2:]
+    y_shuf = mfcc_shuffle_df.iloc[:, 1]
 
     # validation split for confusion matrix validation
     X_train, X_test, y_train, y_test = model_selection.train_test_split(X, y, train_size=0.80, test_size=0.20, random_state=101)
@@ -53,13 +59,10 @@ def main():
 
     # plot confusion matrix
     plt.figure(figsize=(10, 8))
-    sns.heatmap(poly_cf,
-                xticklabels=[0,1,2,3,4,5],
-                yticklabels=[0,1,2,3,4,5],
-                annot=True, fmt='g')
+    sns.heatmap(poly_cf, xticklabels=[0,1,2,3,4,5], yticklabels=[0,1,2,3,4,5], annot=True)
     plt.xlabel('Prediction')
     plt.ylabel('Label')
-    plt.show()
+    plt.savefig('./plots/svm_confusion_matrix.png')
 
     # display results
     print('SVM Polynomial Accuracy: ', poly_accuracy)
@@ -71,8 +74,7 @@ def main():
     y_new = poly_model.predict(X_new)
 
     # write results to csv
-    write_csv(mfcc_test_df.iloc[:, :1], y_new, 'svm_submission')
-
+    write_csv(mfcc_test_df.iloc[:, :1], y_new, './submissions/svm_submission')
 
 
 if __name__ == "__main__":
